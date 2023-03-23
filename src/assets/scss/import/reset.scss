@@ -69,3 +69,35 @@ ul {
   font-size: 1em;
   font-weight: normal;
 }
+
+@-moz-document url-prefix() {
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    text-align: inherit;
+    text-decoration: none;
+    color: inherit;
+  }
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0) {
+  button {
+    background: none;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: inherit;
+    font-family: inherit;
+    line-height: inherit;
+    cursor: pointer;
+    text-align: inherit;
+    text-decoration: none;
+    color: inherit;
+  }
+}

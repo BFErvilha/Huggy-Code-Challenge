@@ -1,8 +1,12 @@
 <template>
-  <div>
-    {{ isLogged }}
-    <div v-if="!isLogged"><button @click="login">Entrar</button></div>
-    <div v-else><button @click="logout">Sair</button></div>
+  <div class="container container-centered">
+    <div class="login-content">
+      <h1>Login</h1>
+      <button v-if="!isLogged" class="huggy-button" @click="login">
+        Fazer login com a Huggy
+      </button>
+      <button v-else class="huggy-button" @click="logout">Sair</button>
+    </div>
   </div>
 </template>
 <script>
@@ -39,4 +43,14 @@ export default {
 };
 </script>
 
-<style></style>
+<style lang="scss" scoped>
+.login-content {
+  h1 {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 32px;
+    color: #262626;
+  }
+}
+</style>

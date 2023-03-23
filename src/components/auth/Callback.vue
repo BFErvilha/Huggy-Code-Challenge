@@ -1,4 +1,10 @@
-<template><div>Loading....</div></template>
+<template>
+  <div class="container container-centered">
+    <div class="login-content">
+      <h1>Loading....</h1>
+    </div>
+  </div>
+</template>
 <script>
 import { onMounted } from 'vue';
 import router from '@/router';

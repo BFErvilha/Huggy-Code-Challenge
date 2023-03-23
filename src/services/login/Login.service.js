@@ -2,13 +2,12 @@ import axios from 'axios';
 
 const expressApi = axios.create({
   baseURL: `http://localhost:3000`,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Origin, Content-Type, X-Auth-Token',
+  },
 });
-
-expressApi.defaults.baseURL = 'http://localhost:3000'; // definindo a base URL do servidor
-
-expressApi.defaults.headers.common['Content-Type'] = 'application/json'; // definindo o cabeçalho Content-Type para JSON
-
-expressApi.defaults.mode = 'cors'; // definindo o modo para cors
 
 export const LoginCode = () => {
   const redirectUri = process.env.VUE_APP_REDIRECT_URI;
