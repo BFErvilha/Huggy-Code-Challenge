@@ -10,91 +10,39 @@
         </tr>
       </thead>
       <tbody>
-        <tr
-          v-for="row in data"
-          :key="row.id"
-          @click="openModal(row)"
-          style="cursor: pointer"
-        >
-          <td>
-            <span>{{ columns[0].label }}</span>
-            <img :src="row.photo" />
-            <p>{{ row.name }}</p>
+        <tr v-for="row in data" :key="row.id" style="cursor: pointer">
+          <td @click="openModal(row)">
+            <div>
+              <img :src="row.photo" />
+              <div>
+                <span>{{ columns[0].label }}</span>
+                <p>{{ row.name }}</p>
+              </div>
+            </div>
           </td>
-          <td>
+          <td @click="openModal(row)">
             <span>{{ columns[1].label }}</span>
             <p>{{ row.email }}</p>
           </td>
-          <td>
+          <td @click="openModal(row)">
             <span>{{ columns[2].label }}</span>
             <p>{{ row.phone }}</p>
           </td>
           <td>
-            <button @click="editRow(row)">
+            <button @click="openModal(row, 'edit')">
               <img class="icon" src="@/assets/images/icon/edit.svg" />
             </button>
-            <button @click="deleteRow(row)">
+            <button @click="openModal(row, 'delete')">
               <img class="icon" src="@/assets/images/icon/delete.svg" />
             </button>
           </td>
         </tr>
       </tbody>
     </table>
-
-    <!-- Modal Visualização -->
-    <HModal
-      v-if="isModalOpen"
-      :header-actions="true"
-      :contactId="selectedContact.id"
-      @closeModal="closeModal"
-      @deleteContact="openDeleteModal($event)"
-    >
-      <template #header>
-        <div class="title">
-          <img :src="selectedContact.photo" />
-          <h2>{{ selectedContact.name }}</h2>
-        </div>
-      </template>
-
-      <template #body>
-        <div class="grid">
-          <small>Email</small>
-          <p>{{ selectedContact.email }}</p>
-
-          <small>Endereço</small>
-          <p>{{ selectedContact.address }}</p>
-
-          <small>Bairro</small>
-          <p>{{ selectedContact.district }}</p>
-
-          <small>Cidade</small>
-          <p>{{ selectedContact.city }}</p>
-
-          <small>Estado</small>
-          <p>{{ selectedContact.state }}</p>
-        </div>
-      </template>
-    </HModal>
-    <!-- Modal Delete -->
-    <HModal v-if="isModalDelete" size="sm">
-      <template #header>
-        <div class="title">
-          <h2>Excluir este contato?</h2>
-        </div>
-      </template>
-
-      <template #footer>
-        <div class="action-footer">
-          <button class="cancel" @click="closeDeleteModal">Cancelar</button>
-          <button class="delete">Excluir</button>
-        </div>
-      </template>
-    </HModal>
   </div>
 </template>
 <script>
 import { ref } from 'vue';
-import HModal from '@/components/Modal/HModal.vue';
 
 export default {
   // eslint-disable-next-line
@@ -111,60 +59,30 @@ export default {
       default: () => [],
     },
   },
-  components: {
-    HModal,
-  },
-  setup() {
+  setup(props, { emit }) {
     const searchQuery = ref('');
     const sortBy = ref('name');
     const sortDirection = ref('asc');
-    const selectedContact = ref(null);
-    const isModalOpen = ref(false);
-    const isModalDelete = ref(false);
-    const toDeleteContact = ref(null);
 
-    // eslint-disable-next-line
-    const editRow = (row) => {
-      // TODO: Implement edit functionality
-    };
-    // eslint-disable-next-line
-    const deleteRow = (id) => {
-      alert(id);
-    };
-
-    const openModal = (item) => {
-      selectedContact.value = item;
-      isModalOpen.value = true;
-    };
-
-    const openDeleteModal = (id) => {
-      if (isModalOpen.value) {
-        isModalOpen.value = false;
+    const openModal = (item, type) => {
+      switch (type) {
+        case 'delete':
+          emit('deleteModal', item.id);
+          break;
+        case 'edit':
+          emit('editModal', item);
+          break;
+        default:
+          emit('viewModal', item);
+          break;
       }
-      toDeleteContact.value = id;
-      isModalDelete.value = true;
-    };
-
-    const closeModal = () => {
-      isModalOpen.value = false;
-    };
-    const closeDeleteModal = () => {
-      isModalDelete.value = false;
     };
 
     return {
       searchQuery,
       sortBy,
       sortDirection,
-      editRow,
-      deleteRow,
       openModal,
-      closeModal,
-      isModalOpen,
-      selectedContact,
-      isModalDelete,
-      openDeleteModal,
-      closeDeleteModal,
     };
   },
 };
@@ -176,6 +94,9 @@ export default {
   table {
     width: 100%;
     border-collapse: collapse;
+    tr {
+      height: 60px;
+    }
     thead {
       tr {
         border-bottom: 1px solid #e1e1e1;
@@ -193,29 +114,25 @@ export default {
     td {
       text-align: left;
       padding: 8px;
-      white-space: nowrap; // evita que o texto seja quebrado em telas menores
+      white-space: nowrap;
       span {
         display: none;
       }
     }
 
-    tr {
-      height: 56px;
-      &:hover {
-        background-color: #f2f2f2;
-
-        td {
-          &:last-child {
-            button {
-              display: inline;
+    tbody {
+      tr {
+        &:hover {
+          background-color: #f2f2f2;
+          td {
+            &:last-child {
+              button {
+                display: inline;
+              }
             }
           }
         }
       }
-    }
-
-    th {
-      font-weight: bold;
     }
 
     td {
@@ -224,17 +141,15 @@ export default {
         width: 32px;
         border-radius: 50%;
         margin-right: 16px;
+        object-fit: cover;
+        object-position: center;
       }
-      &:first-child {
+      div {
         display: flex;
         justify-content: flex-start;
         align-items: center;
       }
       &:last-child {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-
         button {
           display: none;
           margin-right: 8px;
@@ -242,6 +157,8 @@ export default {
           .icon {
             width: 20px;
             height: 20px;
+
+            object-fit: inherit;
           }
         }
       }

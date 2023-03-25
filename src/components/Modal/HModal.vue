@@ -5,10 +5,13 @@
         <slot name="header"></slot>
         <div class="header-actions" v-if="headerActions">
           <img
-            @click="deleteContact(contactId)"
+            @click="doAction('delete', contactId)"
             src="@/assets/images/icon/delete.svg"
           />
-          <img src="@/assets/images/icon/edit.svg" />
+          <img
+            @click="doAction('edit', contactId)"
+            src="@/assets/images/icon/edit.svg"
+          />
           <img @click="closeModal" src="@/assets/images/icon/close.svg" />
         </div>
       </div>
@@ -31,15 +34,21 @@ export default {
     size: { type: String, default: '' },
   },
   setup(props, { emit }) {
-    const deleteContact = (id) => {
-      emit('deleteContact', id);
+    const doAction = (type, id) => {
+      if (type === 'delete') {
+        emit('deleteContact', id);
+      }
+      if (type === 'edit') {
+        emit('editContact', id);
+      }
     };
+
     const closeModal = () => {
       emit('closeModal', true);
     };
     return {
       closeModal,
-      deleteContact,
+      doAction,
     };
   },
 };
@@ -160,11 +169,21 @@ export default {
       button {
         padding: 9px 12px;
         margin: auto 8px;
+        font-size: 14px;
         &.cancel {
           color: #505050;
         }
         &.delete {
           color: #de321b;
+        }
+
+        &.save {
+          padding: 9px 12px;
+          width: 70px;
+          height: 36px;
+          background: #321bde;
+          color: #ffffff;
+          border-radius: 8px;
         }
 
         &:hover {
