@@ -1,6 +1,6 @@
 <template>
   <div class="modal">
-    <div class="modal-content">
+    <div class="modal-content" :class="size ? size : ''">
       <div class="modal-header">
         <slot name="header"></slot>
         <div class="header-actions" v-if="headerActions">
@@ -27,7 +27,8 @@ export default {
   name: 'HModal',
   props: {
     headerActions: { type: Boolean, default: false },
-    contactId: { type: String, required: true },
+    contactId: { type: String, default: '' },
+    size: { type: String, default: '' },
   },
   setup(props, { emit }) {
     const deleteContact = (id) => {
@@ -59,12 +60,21 @@ export default {
 
   &-content {
     background-color: #fff;
-    /* padding: 20px; */
+    width: 100%;
     max-width: 610px;
     border: 1px solid #e1e1e1;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
     border-radius: 12px;
     animation: fadeIn 0.3s ease-in-out forwards;
+    transition: all 0.2s;
+
+    &.sm {
+      max-width: 360px;
+
+      .modal-header {
+        border-bottom: none !important;
+      }
+    }
   }
   &-header {
     border-bottom: 1px solid #e1e1e1;
@@ -100,6 +110,66 @@ export default {
       img {
         padding: 10px 16px;
         cursor: pointer;
+        &:hover {
+          filter: grayscale(1);
+        }
+      }
+    }
+  }
+
+  &-body {
+    padding: 20px;
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 4fr;
+      gap: 16px;
+
+      small {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 12px;
+        line-height: 16px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        text-align: right;
+        letter-spacing: 0.4px;
+        color: #757575;
+      }
+      p {
+        text-align: left;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 14px;
+        line-height: 18px;
+        display: flex;
+        align-items: center;
+        letter-spacing: 0.25px;
+        color: #262626;
+      }
+    }
+  }
+
+  &-footer {
+    padding: 0px 16px 16px 16px;
+    .action-footer {
+      display: flex;
+      justify-content: flex-end;
+
+      button {
+        padding: 9px 12px;
+        margin: auto 8px;
+        &.cancel {
+          color: #505050;
+        }
+        &.delete {
+          color: #de321b;
+        }
+
+        &:hover {
+          filter: brightness(1.75);
+        }
       }
     }
   }

@@ -11,8 +11,8 @@
       </thead>
       <tbody>
         <tr
-          v-for="(row, index) in filteredData"
-          :key="index"
+          v-for="row in data"
+          :key="row.id"
           @click="openModal(row)"
           style="cursor: pointer"
         >
@@ -40,22 +40,14 @@
         </tr>
       </tbody>
     </table>
-    <div class="pagination">
-      <button @click="previousPage" :disabled="currentPage === 1">
-        Previous
-      </button>
 
-      <span>{{ currentPage }} De {{ totalPages }}</span>
-      <button @click="nextPage" :disabled="currentPage === totalPages">
-        Next
-      </button>
-    </div>
+    <!-- Modal Visualização -->
     <HModal
       v-if="isModalOpen"
       :header-actions="true"
       :contactId="selectedContact.id"
       @closeModal="closeModal"
-      @deleteContact="deleteRow($event)"
+      @deleteContact="openDeleteModal($event)"
     >
       <template #header>
         <div class="title">
@@ -64,12 +56,44 @@
         </div>
       </template>
 
-      <template #body> {{ selectedContact }}</template>
+      <template #body>
+        <div class="grid">
+          <small>Email</small>
+          <p>{{ selectedContact.email }}</p>
+
+          <small>Endereço</small>
+          <p>{{ selectedContact.address }}</p>
+
+          <small>Bairro</small>
+          <p>{{ selectedContact.district }}</p>
+
+          <small>Cidade</small>
+          <p>{{ selectedContact.city }}</p>
+
+          <small>Estado</small>
+          <p>{{ selectedContact.state }}</p>
+        </div>
+      </template>
+    </HModal>
+    <!-- Modal Delete -->
+    <HModal v-if="isModalDelete" size="sm">
+      <template #header>
+        <div class="title">
+          <h2>Excluir este contato?</h2>
+        </div>
+      </template>
+
+      <template #footer>
+        <div class="action-footer">
+          <button class="cancel" @click="closeDeleteModal">Cancelar</button>
+          <button class="delete">Excluir</button>
+        </div>
+      </template>
     </HModal>
   </div>
 </template>
 <script>
-import { ref, computed, toRefs } from 'vue';
+import { ref } from 'vue';
 import HModal from '@/components/Modal/HModal.vue';
 
 export default {
@@ -90,93 +114,57 @@ export default {
   components: {
     HModal,
   },
-  setup(props) {
-    const currentPage = ref(1);
-    const pageSize = ref(10);
+  setup() {
     const searchQuery = ref('');
     const sortBy = ref('name');
     const sortDirection = ref('asc');
     const selectedContact = ref(null);
     const isModalOpen = ref(false);
-    const { data } = toRefs(props);
+    const isModalDelete = ref(false);
+    const toDeleteContact = ref(null);
 
-    const filteredData = computed(() => {
-      let filtered = data.value;
-      if (searchQuery.value) {
-        console.log('bateu');
-        filtered = filtered.filter((row) => {
-          return Object.values(row).some((value) => {
-            return String(value)
-              .toLowerCase()
-              .includes(searchQuery.value.toLowerCase());
-          });
-        });
-      }
-
-      const startIndex = (currentPage.value - 1) * pageSize.value;
-      const endIndex = startIndex + pageSize.value;
-
-      const sorted = filtered.sort((a, b) => {
-        const sortA = a[sortBy.value];
-        const sortB = b[sortBy.value];
-
-        if (sortDirection.value === 'asc') {
-          if (sortA < sortB) return -1;
-          if (sortA > sortB) return 1;
-          return 0;
-        } else {
-          if (sortA > sortB) return -1;
-          if (sortA < sortB) return 1;
-          return 0;
-        }
-      });
-      return sorted.slice(startIndex, endIndex);
-    });
-
-    const totalPages = computed(() => {
-      return Math.ceil(data.value.length / pageSize.value);
-    });
-
-    function previousPage() {
-      currentPage.value -= 1;
-    }
-
-    function nextPage() {
-      currentPage.value += 1;
-    }
     // eslint-disable-next-line
-    function editRow(row) {
+    const editRow = (row) => {
       // TODO: Implement edit functionality
-    }
+    };
     // eslint-disable-next-line
-    function deleteRow(row) {
-      alert(row);
-    }
+    const deleteRow = (id) => {
+      alert(id);
+    };
 
-    function openModal(item) {
+    const openModal = (item) => {
       selectedContact.value = item;
       isModalOpen.value = true;
-    }
+    };
 
-    function closeModal() {
+    const openDeleteModal = (id) => {
+      if (isModalOpen.value) {
+        isModalOpen.value = false;
+      }
+      toDeleteContact.value = id;
+      isModalDelete.value = true;
+    };
+
+    const closeModal = () => {
       isModalOpen.value = false;
-    }
+    };
+    const closeDeleteModal = () => {
+      isModalDelete.value = false;
+    };
+
     return {
-      currentPage,
-      pageSize,
       searchQuery,
       sortBy,
       sortDirection,
-      filteredData,
-      totalPages,
-      previousPage,
-      nextPage,
       editRow,
       deleteRow,
       openModal,
       closeModal,
       isModalOpen,
       selectedContact,
+      isModalDelete,
+      openDeleteModal,
+      closeDeleteModal,
     };
   },
 };
