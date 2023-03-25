@@ -7,7 +7,7 @@ const axiosIns = axios.create({
 });
 
 axiosIns.interceptors.request.use((config) => {
-  const token = store.getters.token;
+  const token = store.getters.access_token;
 
   config.headers.Authorization = `Bearer ${token}`;
   if (config.data instanceof FormData) {
@@ -16,6 +16,6 @@ axiosIns.interceptors.request.use((config) => {
   return config;
 });
 
-Vue.prototype.$http = axiosIns;
+Vue.prototype.$axios = axiosIns;
 
 export default axiosIns;

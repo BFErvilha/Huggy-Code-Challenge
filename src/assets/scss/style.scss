@@ -1,7 +1,11 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
-@import url('./import/reset.scss');
-@import url('./import/normalize.scss');
-@import url('./import/grid.scss');
+@import url('./import/_reset.scss');
+@import url('./import/_normalize.scss');
+@import url('./import/_grid.scss');
+
+// Variables
+$primary: #321BDE;
+$font-color: #262626;
 
 * {
   font-family: 'Roboto', sans-serif;
@@ -9,6 +13,24 @@
 
 html {
   background-color: #E5E5E5;
+}
+
+input {
+    box-sizing: border-box;
+    padding: 8px 12px;
+    max-width: 250px;
+    width: 100%;
+    height: 36px;
+    background: #F8F8F8;
+    border: 1px solid #E1E1E1;
+    border-radius: 8px;
+    color: $font-color;
+
+    &:focus {
+        outline: none;
+        border-color: $primary!important;
+        box-shadow: 0 0 0 0.2rem rgba(50, 27, 222, 0.25);
+    }
 }
 
 .container-centered {
@@ -44,7 +66,7 @@ html {
   
     /* persian-blue/600 */
   
-    background: #321BDE;
+    background: $primary;
     color: #fff;
     border-radius: 8px;
     -webkit-box-flex: none;
@@ -70,4 +92,22 @@ html {
     border: 1px solid #E1E1E1;
     box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.15);
     border-radius: 16px;
+}
+
+.padding-16-0{
+  padding: 16px 0;
+}
+
+.width-100{
+  width: 100%;
+}
+
+.text-center{
+  text-align: center;
+}
+.text-left {
+  text-align: left;
+}
+.text-right {
+  text-align: right;
 }

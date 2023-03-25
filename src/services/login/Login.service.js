@@ -18,7 +18,7 @@ export const LoginCode = () => {
 };
 
 export const loginAuth = async (code) => {
-  return expressApi
+  return await expressApi
     .get(`/access-token/${code}`)
     .then((response) => {
       return response.data;

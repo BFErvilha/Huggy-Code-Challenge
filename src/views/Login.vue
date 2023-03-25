@@ -26,6 +26,7 @@ export default {
 
     const logout = () => {
       store.dispatch('logoutUser');
+      window.location.reload();
     };
 
     onMounted(() => {
