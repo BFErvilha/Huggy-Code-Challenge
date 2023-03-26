@@ -16,11 +16,19 @@
             <div class="row justify-between padding-16-0 width-100">
               <div class="grid-8 text-left">
                 <div class="search">
-                  <input type="text" placeholder="Buscar Contato" />
+                  <input
+                    type="text"
+                    v-model="searchQuery"
+                    placeholder="Buscar Contato"
+                  />
                 </div>
               </div>
               <div class="grid-8 row justify-end">
-                <button class="huggy-button text-right">
+                <button
+                  @click="openModal('editCreate')"
+                  class="huggy-button text-right"
+                  @input="doSearch()"
+                >
                   <img src="@/assets/images/icon/plus.svg" />
                   Adicionar contato
                 </button>
@@ -29,9 +37,9 @@
                 <HTable
                   :columns="columns"
                   :data="contacts"
-                  @viewModal="openModal($event, 'view')"
-                  @deleteModal="openModal($event, 'delete')"
-                  @editModal="openModal($event, 'editCreate')"
+                  @viewModal="openModal('view', $event)"
+                  @deleteModal="openModal('delete', $event)"
+                  @editModal="openModal('editCreate', $event)"
                 />
               </div>
 
@@ -41,8 +49,8 @@
                 :header-actions="true"
                 :contactId="selectedContact.id"
                 @closeModal="closeModal('view')"
-                @deleteContact="openModal($event, 'delete')"
-                @editContact="openModal($event, 'editCreate')"
+                @deleteContact="openModal('delete', $event)"
+                @editContact="openModal('editCreate', $event)"
               >
                 <template #header>
                   <div class="title">
@@ -98,47 +106,48 @@
               <HModal v-if="isModal.editCreate">
                 <template #header>
                   <div class="title">
-                    <h2>Editar contato</h2>
+                    <h2 v-if="contactForm.id">Editar contato</h2>
+                    <h2 v-else>Adicionar novo contato</h2>
                   </div>
                 </template>
                 <template #body>
                   <div class="grid-10">
                     <HInput
                       label="Nome"
-                      :input-value="contactForm.name"
-                      @input="contactForm.name = $event.target.value"
+                      :input-value="selectedContact.name"
+                      @input="contactForm.name = $event"
                       placeholder="Nome Completo"
                     />
                   </div>
                   <div class="grid-10">
                     <HInput
                       label="Email"
-                      :input-value="contactForm.email"
-                      @input="contactForm.email = $event.target.value"
+                      :input-value="selectedContact.email"
+                      @input="contactForm.email = $event"
                       placeholder="Email"
                     />
                   </div>
                   <div class="grid-8">
                     <HInput
                       label="Telefone"
-                      :input-value="contactForm.phone"
-                      @input="contactForm.phone = $event.target.value"
+                      :input-value="selectedContact.phone"
+                      @input="contactForm.phone = $event"
                       placeholder="Telefone"
                     />
                   </div>
                   <div class="grid-8">
                     <HInput
                       label="Celular"
-                      :input-value="contactForm.mobile"
-                      @input="contactForm.mobile = $event.target.value"
+                      :input-value="selectedContact.mobile"
+                      @input="contactForm.mobile = $event"
                       placeholder="Celular"
                     />
                   </div>
                   <div class="grid-13">
                     <HInput
                       label="Endereço"
-                      :input-value="contactForm.address"
-                      @input="contactForm.address = $event.target.value"
+                      :input-value="selectedContact.address"
+                      @input="contactForm.address = $event"
                       placeholder="Endereço"
                     />
                   </div>
@@ -146,16 +155,16 @@
                     <div class="grid-8">
                       <HInput
                         label="Bairro"
-                        :input-value="contactForm.district"
-                        @input="contactForm.district = $event.target.value"
+                        :input-value="selectedContact.district"
+                        @input="contactForm.district = $event"
                         placeholder="Bairro"
                       />
                     </div>
                     <div class="grid-4">
                       <HInput
                         label="Estado"
-                        :input-value="contactForm.state"
-                        @input="contactForm.state = $event.target.value"
+                        :input-value="selectedContact.state"
+                        @input="contactForm.state = $event"
                         placeholder="Estado"
                       />
                     </div>
@@ -166,7 +175,16 @@
                     <button class="cancel" @click="closeModal('editCreate')">
                       Cancelar
                     </button>
-                    <button class="save" @click="saveContact()">Salvar</button>
+                    <button
+                      class="save"
+                      v-if="contactForm.id"
+                      @click="HandleSaveContact()"
+                    >
+                      Salvar
+                    </button>
+                    <button class="save" v-else @click="HandleCreateContact()">
+                      Salvar
+                    </button>
                   </div>
                 </template>
               </HModal>
@@ -182,12 +200,16 @@
 import {
   getContacts,
   deleteContact,
+  updateContact,
+  createContact,
 } from '@/services/contacts/Contact.service';
 import { ref, onMounted } from 'vue';
 import HTable from '@/components/HTable/HTable.vue';
 import HModal from '@/components/Modal/HModal.vue';
 import HToast from '@/components/Toast/HToast.vue';
 import HInput from '@/components/HInput/HInput.vue';
+
+import { identifyType } from '@/utils/utils';
 
 export default {
   name: 'AdminHome',
@@ -204,12 +226,14 @@ export default {
       { name: 'email', label: 'E-Mail' },
       { name: 'phone', label: 'Telefone' },
     ];
-    const selectedContact = ref(null);
-    const contactForm = ref(null);
+    const selectedContact = ref({});
+    const contactForm = ref({});
+    const searchQuery = ref('');
     const isModal = ref({
       view: false,
       delete: false,
       editCreate: false,
+      modalTitle: '',
     });
     const toDeleteContact = ref(null);
     const toast = ref({ show: false, type: '' });
@@ -245,25 +269,31 @@ export default {
       toast.value.show = false;
     };
 
-    const openModal = (item, type) => {
-      if (type === 'view') {
-        selectedContact.value = item;
-        isModal.value.view = true;
-      }
-      if (type === 'delete') {
-        selectedContact.value = item;
-        isModal.value.view = false;
-        isModal.value.delete = true;
-      }
-      if (type === 'editCreate') {
-        if (typeof item === 'object') {
-          contactForm.value = item;
-        } else {
-          contactForm.value = contacts.value.filter(
-            (element) => element.id === item,
-          );
+    const openModal = (type, item = null) => {
+      if (item !== null) {
+        if (type === 'view') {
+          selectedContact.value = item;
+          isModal.value.view = true;
         }
-        isModal.value.view = false;
+        if (type === 'delete') {
+          selectedContact.value = item;
+          isModal.value.view = false;
+          isModal.value.delete = true;
+        }
+        if (type === 'editCreate') {
+          if (typeof item === 'object') {
+            selectedContact.value = item;
+            contactForm.value.id = item.id;
+          } else {
+            selectedContact.value = contacts.value.filter(
+              (element) => element.id === item,
+            );
+            contactForm.value.id = item;
+          }
+          isModal.value.view = false;
+          isModal.value.editCreate = true;
+        }
+      } else {
         isModal.value.editCreate = true;
       }
     };
@@ -280,18 +310,33 @@ export default {
       }
     };
 
-    const saveContact = async () => {
-      console.log(contactForm.value.name);
-      // await updateContact(contactForm.value)
-      //   .then(() => {
-      //     showToast('success');
-      //     HandleGetContacts();
-      //     closeModal('editCreate');
-      //   })
-      //   .catch((error) => {
-      //     console.log(error);
-      //     showToast('error');
-      //   });
+    const HandleSaveContact = async () => {
+      await updateContact(contactForm.value)
+        .then(() => {
+          showToast('success');
+          HandleGetContacts();
+          closeModal('editCreate');
+        })
+        .catch((error) => {
+          console.log(error);
+          showToast('error');
+        });
+    };
+    const HandleCreateContact = async () => {
+      await createContact(contactForm.value)
+        .then(() => {
+          showToast('success');
+          HandleGetContacts();
+          closeModal('editCreate');
+        })
+        .catch((error) => {
+          console.log(error);
+          showToast('error');
+        });
+    };
+
+    const doSearch = () => {
+      console.log(identifyType(searchQuery.value));
     };
 
     onMounted(() => {
@@ -310,8 +355,11 @@ export default {
       closeToast,
       toast,
       isModal,
-      saveContact,
+      HandleSaveContact,
+      HandleCreateContact,
       contactForm,
+      searchQuery,
+      doSearch,
     };
   },
 };

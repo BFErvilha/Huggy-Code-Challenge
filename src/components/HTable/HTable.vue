@@ -26,7 +26,7 @@
           </td>
           <td @click="openModal(row)">
             <span>{{ columns[2].label }}</span>
-            <p>{{ row.phone }}</p>
+            <p>{{ formatNumber(row.phone) }}</p>
           </td>
           <td>
             <button @click="openModal(row, 'edit')">
@@ -43,7 +43,7 @@
 </template>
 <script>
 import { ref } from 'vue';
-
+import { formatPhoneNUmber } from '@/utils/utils';
 export default {
   // eslint-disable-next-line
   name: 'Htable',
@@ -60,7 +60,6 @@ export default {
     },
   },
   setup(props, { emit }) {
-    const searchQuery = ref('');
     const sortBy = ref('name');
     const sortDirection = ref('asc');
 
@@ -78,11 +77,15 @@ export default {
       }
     };
 
+    const formatNumber = (value) => {
+      return formatPhoneNUmber(value);
+    };
+
     return {
-      searchQuery,
       sortBy,
       sortDirection,
       openModal,
+      formatNumber,
     };
   },
 };

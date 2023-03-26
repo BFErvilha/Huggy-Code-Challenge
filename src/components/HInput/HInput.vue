@@ -60,13 +60,19 @@ export default {
 
     function onInput(event) {
       const { value } = event.target;
+      emit('input', value);
       maskInputValue(value);
     }
 
     watch(
       () => props.inputValue,
       (newValue) => {
+        emit('input', newValue);
         maskInputValue(newValue);
+      },
+      {
+        immediate: true,
+        deep: true,
       },
     );
 

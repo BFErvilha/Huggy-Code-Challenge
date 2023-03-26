@@ -13,3 +13,7 @@ export const deleteContact = (id) => {
 export const updateContact = (contact) => {
   return axios.put(`${contacts}/${contact.id}`, contact);
 };
+
+export const createContact = (newContact) => {
+  return axios.post(`${contacts}`, newContact);
+};
