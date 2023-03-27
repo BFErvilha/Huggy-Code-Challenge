@@ -35,11 +35,5 @@ export default {
       }
     });
   },
-  // mounted() {
-  //   this.$nextTick(() => {
-  //     console.log('pudim');
-  //     // window.location.href = '/';
-  //   });
-  // },
 };
 </script>

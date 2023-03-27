@@ -26,21 +26,39 @@
               <div class="grid-8 row justify-end">
                 <button
                   @click="openModal('editCreate')"
-                  class="huggy-button text-right"
-                  @input="doSearch()"
+                  class="huggy-button newContact text-right"
                 >
                   <img src="@/assets/images/icon/plus.svg" />
                   Adicionar contato
                 </button>
               </div>
               <div class="grid-16">
+                <Loading v-if="isLoading" />
                 <HTable
+                  v-else
                   :columns="columns"
                   :data="contacts"
                   @viewModal="openModal('view', $event)"
                   @deleteModal="openModal('delete', $event)"
                   @editModal="openModal('editCreate', $event)"
-                />
+                >
+                  <template #no-data>
+                    <div class="noData-content">
+                      <img
+                        src="@/assets/images/contact-book.png"
+                        alt="Image Contact"
+                      />
+                      <p>Ainda não há contatos</p>
+                      <button
+                        @click="openModal('create')"
+                        class="huggy-button text-right"
+                      >
+                        <img src="@/assets/images/icon/plus.svg" />
+                        Adicionar contato
+                      </button>
+                    </div>
+                  </template>
+                </HTable>
               </div>
 
               <!-- Modal View -->
@@ -94,7 +112,7 @@
                     </button>
                     <button
                       class="delete"
-                      @click="HandleDeleteContact(toDeleteContact)"
+                      @click="HandleDeleteContact(selectedContact)"
                     >
                       Excluir
                     </button>
@@ -116,6 +134,8 @@
                       label="Nome"
                       :input-value="selectedContact.name"
                       @input="contactForm.name = $event"
+                      :required="isInvalid"
+                      :isInvalid="invalidField.name"
                       placeholder="Nome Completo"
                     />
                   </div>
@@ -124,6 +144,8 @@
                       label="Email"
                       :input-value="selectedContact.email"
                       @input="contactForm.email = $event"
+                      :required="true"
+                      :isInvalid="invalidField.email"
                       placeholder="Email"
                     />
                   </div>
@@ -132,6 +154,8 @@
                       label="Telefone"
                       :input-value="selectedContact.phone"
                       @input="contactForm.phone = $event"
+                      :required="true"
+                      :isInvalid="invalidField.phone"
                       placeholder="Telefone"
                     />
                   </div>
@@ -140,6 +164,8 @@
                       label="Celular"
                       :input-value="selectedContact.mobile"
                       @input="contactForm.mobile = $event"
+                      :required="true"
+                      :isInvalid="invalidField.mobile"
                       placeholder="Celular"
                     />
                   </div>
@@ -203,14 +229,12 @@ import {
   updateContact,
   createContact,
 } from '@/services/contacts/Contact.service';
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, watchEffect } from 'vue';
 import HTable from '@/components/HTable/HTable.vue';
 import HModal from '@/components/Modal/HModal.vue';
 import HToast from '@/components/Toast/HToast.vue';
 import HInput from '@/components/HInput/HInput.vue';
-
-import { identifyType } from '@/utils/utils';
-
+import Loading from '@/components/Loading/Loading.vue';
 export default {
   name: 'AdminHome',
   components: {
@@ -218,6 +242,7 @@ export default {
     HModal,
     HToast,
     HInput,
+    Loading,
   },
   setup() {
     const contacts = ref(undefined);
@@ -229,21 +254,32 @@ export default {
     const selectedContact = ref({});
     const contactForm = ref({});
     const searchQuery = ref('');
+    const isInvalid = ref(false);
+    const invalidField = ref({
+      name: false,
+      email: false,
+      phone: false,
+      mobile: false,
+    });
+    const isLoading = ref(false);
     const isModal = ref({
       view: false,
       delete: false,
       editCreate: false,
       modalTitle: '',
     });
-    const toDeleteContact = ref(null);
     const toast = ref({ show: false, type: '' });
+
     const HandleGetContacts = async () => {
+      isLoading.value = true;
       await getContacts()
         .then((response) => {
           contacts.value = response.data;
+          isLoading.value = false;
         })
         .catch((error) => {
           console.log(error);
+          isLoading.value = false;
         });
     };
 
@@ -300,44 +336,87 @@ export default {
 
     const closeModal = (type) => {
       if (type === 'view') {
+        selectedContact.value = '';
         return (isModal.value.view = false);
       }
       if (type === 'delete') {
+        selectedContact.value = '';
         return (isModal.value.delete = false);
       }
       if (type === 'editCreate') {
+        selectedContact.value = '';
         return (isModal.value.editCreate = false);
       }
     };
 
     const HandleSaveContact = async () => {
-      await updateContact(contactForm.value)
-        .then(() => {
-          showToast('success');
-          HandleGetContacts();
-          closeModal('editCreate');
-        })
-        .catch((error) => {
-          console.log(error);
-          showToast('error');
-        });
+      if (validateForm(contactForm.value)) {
+        await updateContact(contactForm.value)
+          .then(() => {
+            showToast('success');
+            HandleGetContacts();
+            closeModal('editCreate');
+          })
+          .catch((error) => {
+            console.log(error);
+            showToast('error');
+          });
+      } else {
+        return isInvalid;
+      }
     };
     const HandleCreateContact = async () => {
-      await createContact(contactForm.value)
-        .then(() => {
-          showToast('success');
-          HandleGetContacts();
-          closeModal('editCreate');
-        })
-        .catch((error) => {
-          console.log(error);
-          showToast('error');
-        });
+      if (validateForm(contactForm.value)) {
+        await createContact(contactForm.value)
+          .then(() => {
+            showToast('success');
+            HandleGetContacts();
+            closeModal('editCreate');
+          })
+          .catch((error) => {
+            console.log(error);
+            showToast('error');
+          });
+      } else {
+        return isInvalid;
+      }
     };
 
-    const doSearch = () => {
-      console.log(identifyType(searchQuery.value));
+    const validateForm = (form) => {
+      let formObject = Object.entries(form);
+      formObject.forEach(([key, value]) => {
+        if (value.length === 0) {
+          if (Object.prototype.hasOwnProperty.call(invalidField.value, key)) {
+            invalidField.value[key] = true;
+            isInvalid.value = true;
+          }
+        } else {
+          if (Object.prototype.hasOwnProperty.call(invalidField.value, key)) {
+            invalidField.value[key] = false;
+          }
+        }
+      });
+      return !Object.values(invalidField.value).some((value) => value === true);
     };
+
+    watchEffect(() => {
+      if (searchQuery.value !== '') {
+        contacts.value = contacts.value.filter(
+          (contact) =>
+            contact.name
+              .toLowerCase()
+              .includes(searchQuery.value.toLowerCase()) ||
+            contact.email
+              .toLowerCase()
+              .includes(searchQuery.value.toLowerCase()) ||
+            contact.phone
+              .toLowerCase()
+              .includes(searchQuery.value.toLowerCase()),
+        );
+      } else {
+        HandleGetContacts();
+      }
+    });
 
     onMounted(() => {
       HandleGetContacts();
@@ -350,7 +429,6 @@ export default {
       openModal,
       closeModal,
       selectedContact,
-      toDeleteContact,
       HandleDeleteContact,
       closeToast,
       toast,
@@ -359,7 +437,9 @@ export default {
       HandleCreateContact,
       contactForm,
       searchQuery,
-      doSearch,
+      isLoading,
+      isInvalid,
+      invalidField,
     };
   },
 };
@@ -392,6 +472,22 @@ export default {
     border-radius: 4px;
     box-sizing: border-box;
     font-size: 16px;
+  }
+  @media (max-width: 504px) {
+    max-width: 500px;
+    width: 100%;
+
+    input {
+      max-width: 396px !important;
+      width: 100%;
+    }
+  }
+}
+
+.newContact {
+  @media (max-width: 504px) {
+    max-width: 500px !important;
+    width: 100% !important;
   }
 }
 </style>

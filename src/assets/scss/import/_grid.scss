@@ -142,11 +142,9 @@
   display: table;
 }
 
-/* Criação das classes de alinhamento */
 .row {
   display: flex;
   flex-wrap: wrap;
-  // margin: 0 -10px;
 }
 
 .align-start {

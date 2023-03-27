@@ -1,17 +1,18 @@
 <template>
-  <div class="form-group">
+  <div class="form-group" :class="isInvalid && 'isInvalid'">
     <label>{{ label }}</label>
     <input
       type="text"
       :placeholder="placeholder"
       v-model="maskedInputValue"
-      @input="onInput"
+      @input="onInput($event, placeholder)"
     />
+    <div v-if="isInvalid" class="invalid-feedback">{{ errorMessage }}</div>
   </div>
 </template>
-
 <script>
-import { reactive, watch } from 'vue';
+import { reactive, watch, ref } from 'vue';
+import { identifyType } from '@/utils/utils';
 
 export default {
   name: 'HInput',
@@ -28,13 +29,22 @@ export default {
       type: [String, Number],
       default: '',
     },
+    required: {
+      type: Boolean,
+      default: false,
+    },
+    isInvalid: {
+      type: Boolean,
+      default: false,
+    },
   },
   setup(props, { emit }) {
     const state = reactive({
       maskedInputValue: '',
     });
+    const errorMessage = ref('Campo obrigatório');
 
-    function maskInputValue(value) {
+    const maskInputValue = (value) => {
       if (typeof value !== 'string') {
         state.maskedInputValue = value;
         return;
@@ -56,13 +66,39 @@ export default {
         match[1] + ' (' + match[2] + ') ' + match[3] + '-' + match[4];
 
       emit('update:inputValue', state.maskedInputValue);
-    }
+    };
 
-    function onInput(event) {
+    const onInput = (event, placeholder) => {
       const { value } = event.target;
-      emit('input', value);
-      maskInputValue(value);
-    }
+      if (validateInput(value, placeholder)) {
+        // eslint-disable-next-line
+        props.isInvalid = false;
+        errorMessage.value = '';
+        emit('input', value);
+        maskInputValue(value);
+      } else {
+        // eslint-disable-next-line
+        props.isInvalid = true;
+        errorMessage.value = 'Campo inválido';
+      }
+    };
+
+    const validateInput = (inputValue, placeholder) => {
+      const input = identifyType(inputValue);
+      switch (placeholder) {
+        case 'Nome Completo':
+          return input === 'name';
+        case 'Email':
+          return input === 'email';
+        case 'Telefone':
+        case 'Celular':
+          // eslint-disable-next-line
+          const regex = /^(\d{2})(\d{2})(\d{4,5})(\d{4})$/;
+          return input === 'phone' && regex.test(inputValue);
+        default:
+          return false;
+      }
+    };
 
     watch(
       () => props.inputValue,
@@ -81,6 +117,7 @@ export default {
     return {
       maskedInputValue: state.maskedInputValue,
       onInput,
+      errorMessage,
     };
   },
 };
@@ -117,6 +154,23 @@ export default {
       line-height: 18px;
       letter-spacing: 0.25px;
       color: #262626;
+    }
+  }
+
+  &.isInvalid {
+    input {
+      border: 1px solid #ad2213;
+      border-radius: 8px;
+    }
+
+    .invalid-feedback {
+      font-style: normal;
+      font-weight: 500;
+      font-size: 12px;
+      line-height: 16px;
+      letter-spacing: 0.4px;
+      text-align: left;
+      color: #ad2213;
     }
   }
 }

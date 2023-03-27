@@ -1,7 +1,7 @@
 <template>
   <div class="table-responsive">
     <table class="table">
-      <thead>
+      <thead :class="data.length === 0 ? 'no-data' : ''">
         <tr>
           <th width="30%" v-for="(column, index) in columns" :key="index">
             {{ column.label }}
@@ -10,33 +10,38 @@
         </tr>
       </thead>
       <tbody>
-        <tr v-for="row in data" :key="row.id" style="cursor: pointer">
-          <td @click="openModal(row)">
-            <div>
-              <img :src="row.photo" />
+        <template v-if="data.length > 0">
+          <tr v-for="row in data" :key="row.id" style="cursor: pointer">
+            <td @click="openModal(row)">
               <div>
-                <span>{{ columns[0].label }}</span>
-                <p>{{ row.name }}</p>
+                <img :src="row.photo" />
+                <div>
+                  <span>{{ columns[0].label }}</span>
+                  <p>{{ row.name }}</p>
+                </div>
               </div>
-            </div>
-          </td>
-          <td @click="openModal(row)">
-            <span>{{ columns[1].label }}</span>
-            <p>{{ row.email }}</p>
-          </td>
-          <td @click="openModal(row)">
-            <span>{{ columns[2].label }}</span>
-            <p>{{ formatNumber(row.phone) }}</p>
-          </td>
-          <td>
-            <button @click="openModal(row, 'edit')">
-              <img class="icon" src="@/assets/images/icon/edit.svg" />
-            </button>
-            <button @click="openModal(row, 'delete')">
-              <img class="icon" src="@/assets/images/icon/delete.svg" />
-            </button>
-          </td>
-        </tr>
+            </td>
+            <td @click="openModal(row)">
+              <span>{{ columns[1].label }}</span>
+              <p>{{ row.email }}</p>
+            </td>
+            <td @click="openModal(row)">
+              <span>{{ columns[2].label }}</span>
+              <p>{{ formatNumber(row.phone) }}</p>
+            </td>
+            <td>
+              <button @click="openModal(row, 'edit')">
+                <img class="icon" src="@/assets/images/icon/edit.svg" />
+              </button>
+              <button @click="openModal(row, 'delete')">
+                <img class="icon" src="@/assets/images/icon/delete.svg" />
+              </button>
+            </td>
+          </tr>
+        </template>
+        <template v-else>
+          <slot name="no-data"></slot>
+        </template>
       </tbody>
     </table>
   </div>
@@ -70,6 +75,9 @@ export default {
           break;
         case 'edit':
           emit('editModal', item);
+          break;
+        case 'create':
+          emit('createModal');
           break;
         default:
           emit('viewModal', item);
@@ -168,13 +176,19 @@ export default {
     }
 
     @media (max-width: 768px) {
+      .no-data {
+        tr {
+          border: none !important;
+        }
+      }
+
       th {
-        display: none; // esconde o cabeçalho em telas menores
+        display: none;
       }
 
       tr {
         margin-bottom: 16px;
-        box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1); // adiciona sombra aos cartões
+        box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.1);
         background-color: #fff;
         border-radius: 8px;
         padding: 16px;
@@ -185,15 +199,14 @@ export default {
             display: block;
             font-size: 13px;
             font-weight: bold;
+            margin-right: 10px;
           }
           &:first-child {
-            background-color: #f9f9f9; // destaca a primeira coluna em telas maiores
+            background-color: #f9f9f9;
           }
 
           &::before {
-            content: attr(
-              data-label
-            ); // exibe o nome da coluna acima do valor em telas menores
+            content: attr(data-label);
             font-weight: bold;
             margin-bottom: 8px;
             display: block;
@@ -203,27 +216,19 @@ export default {
     }
   }
 
-  .pagination {
-    margin-top: 16px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  .noData-content {
+    position: absolute;
+    width: 97%;
+    margin: 19% auto;
+    padding-right: 15px;
+    padding-left: 15px;
 
-    button {
-      padding: 8px;
-      border: 1px solid #ddd;
-      background-color: #fff;
-      cursor: pointer;
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
+    p {
+      margin: 16px auto 24px;
     }
-
-    span {
-      font-size: 16px;
-      font-weight: bold;
+    button {
+      display: block;
+      margin: 10px auto;
     }
   }
 }
